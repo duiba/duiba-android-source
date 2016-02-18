@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.pm.ApplicationInfo;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
@@ -82,11 +83,20 @@ import java.util.Stack;
  * 删除掉不使用的工具方法
  */
 
+/**
+ * Version 1.0.8
+ * 修改唤醒登录后历史页面返回刷新的功能，同时修复了一个唤醒登录历史页面不刷新的bug。
+ * 改为使用IS_WAKEUP_LOGIN静态变量标记唤醒登录状态，在onResume方法里加入判断，
+ * 实现历史页面返回刷新的功能。
+ */
+
 public class CreditActivity extends Activity {
 	private static String ua;
 	private static Stack<CreditActivity> activityStack;
 	public static final String VERSION="1.0.7";
     public static CreditsListener creditsListener;
+    public static boolean IS_WAKEUP_LOGIN = false;
+    public static String INDEX_URI = "/chome/index";
 
     public interface CreditsListener{
         /**
@@ -342,6 +352,11 @@ public class CreditActivity extends Activity {
         WebSettings settings = mWebView.getSettings();
 
         // User settings
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            if (0 != (getApplicationInfo().flags &= ApplicationInfo.FLAG_DEBUGGABLE)) {
+                WebView.setWebContentsDebuggingEnabled(true);
+            }
+        }
         settings.setJavaScriptEnabled(true);	//设置webview支持javascript
         settings.setLoadsImagesAutomatically(true);	//支持自动加载图片
         settings.setUseWideViewPort(true);	//设置webview推荐使用的窗口，使html界面自适应屏幕
@@ -460,10 +475,6 @@ public class CreditActivity extends Activity {
 				startActivity(viewIntent);
 				return true;
 			}
-			if (url.contains("autologin") && activityStack.size() > 1) { // 未登录用户登录后返回，所有历史页面置为待刷新
-				// 将所有已开Activity设置为onResume时刷新页面。
-				setAllActivityDelayRefresh();
-			}
 			view.loadUrl(url);
 		}
 		return true;
@@ -487,9 +498,9 @@ public class CreditActivity extends Activity {
 			this.url = getIntent().getStringExtra("url");
 			mWebView.loadUrl(this.url);
 			ifRefresh = false;
-		} else if (delayRefresh) {
+		} else if (IS_WAKEUP_LOGIN && this.url.indexOf(INDEX_URI) > 0) {
 			mWebView.reload();
-			delayRefresh = false;
+            IS_WAKEUP_LOGIN = false;
 		} else {
 	    	// 返回页面时，如果页面含有onDBNewOpenBack()方法,则调用该js方法。
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
@@ -546,17 +557,18 @@ public class CreditActivity extends Activity {
     }
     
     /**
+     * （已弃用此方法，改为使用静态变量IS_WAKEUP_LOGIN来做通过唤醒登录的判断，从而设置返回后刷新）
      * 设置栈内所有Activity为返回待刷新。
      * 作用：未登录用户唤起登录后，将所有栈内的Activity设置为onResume时刷新页面。
      */
-    public void setAllActivityDelayRefresh(){
-    	int size = activityStack.size();
-        for (int i = 0;i < size; i++) {
-        	if(activityStack.get(i)!=this){
-        		activityStack.get(i).delayRefresh = true;
-        	}
-        }
-    }
+//    public void setAllActivityDelayRefresh(){
+//    	int size = activityStack.size();
+//        for (int i = 0;i < size; i++) {
+//        	if(activityStack.get(i)!=this){
+//        		activityStack.get(i).delayRefresh = true;
+//        	}
+//        }
+//    }
     
     /** 
      * 根据手机的分辨率从 dp 的单位 转成为 px(像素) 
