@@ -51,16 +51,16 @@ public final class MainActivity extends Activity{
 					/**
 			         * 当点击“请先登录”按钮唤起登录时，会调用此处代码。
                      * 用户登录后，需要将CreditsActivity.IS_WAKEUP_LOGIN变量设置为true。
-			         * @param webView 用于登录成功后返回到当前的webview并刷新。
+			         * @param webView 用于登录成功后返回到当前的webview刷新登录状态。
 			         * @param currentUrl 当前页面的url
-                     *
 			         */
 					public void onLoginClick(WebView webView, String currentUrl) {
 						//当未登录的用户点击去登录时，会调用此处代码。
-						//为了用户登录后能回到未登录前的页面（currentUrl）。
-						//当用户登录成功后，需要重新从服务端动态生成一次免登录url，需包含redirect参数，将currentUrl放入redirect参数。
-						//用该方法中的webview变量加载免登陆url。
                         //用户登录后，需要将CreditsActivity.IS_WAKEUP_LOGIN变量设置为true。
+						//为了用户登录后能回到未登录前的页面（currentUrl）。
+						//当用户登录成功后，需要重新请求一次服务端，带上currentUrl。
+                        //用该方法中的webview变量加载请求链接。
+                        //服务端收到请求后在生成免登录url时，将currentUrl放入redirect参数，通知客户端302跳转到新生成的免登录URL。
 						new AlertDialog.Builder(webView.getContext()) 
 					 	.setTitle("跳转登录")
 					 	.setMessage("跳转到登录页面？")

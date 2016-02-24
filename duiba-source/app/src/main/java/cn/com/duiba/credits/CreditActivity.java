@@ -93,7 +93,7 @@ import java.util.Stack;
 public class CreditActivity extends Activity {
 	private static String ua;
 	private static Stack<CreditActivity> activityStack;
-	public static final String VERSION="1.0.7";
+	public static final String VERSION="1.0.8";
     public static CreditsListener creditsListener;
     public static boolean IS_WAKEUP_LOGIN = false;
     public static String INDEX_URI = "/chome/index";
@@ -498,6 +498,8 @@ public class CreditActivity extends Activity {
 			this.url = getIntent().getStringExtra("url");
 			mWebView.loadUrl(this.url);
 			ifRefresh = false;
+            //如果首页含有登录的入口，返回时需要同时刷新首页的话，
+            // 需要把下面判断语句中的 && this.url.indexOf(INDEX_URI) > 0 去掉。
 		} else if (IS_WAKEUP_LOGIN && this.url.indexOf(INDEX_URI) > 0) {
 			mWebView.reload();
             IS_WAKEUP_LOGIN = false;
