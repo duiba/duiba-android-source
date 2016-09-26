@@ -2,33 +2,33 @@ package cn.com.duiba.credits;
 
 import android.app.ActionBar;
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.Color;
 import android.net.Uri;
+import android.net.http.SslError;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
-import android.webkit.CookieManager;
-import android.webkit.JavascriptInterface;
-import android.webkit.ValueCallback;
-import android.webkit.WebChromeClient;
-import android.webkit.WebSettings;
+import android.webkit.*;
 import android.webkit.WebSettings.PluginState;
 import android.webkit.WebSettings.ZoomDensity;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import java.util.List;
 import java.util.Stack;
 
 /**
@@ -270,6 +270,7 @@ public class CreditActivity extends Activity {
 			public boolean shouldOverrideUrlLoading(WebView view, String url) {
 				return shouldOverrideUrlByDuiba(view, url);
 			}
+
 		});
 
 		mWebView.loadUrl(url);
@@ -407,9 +408,22 @@ public class CreditActivity extends Activity {
 			startActivity(intent);
 			return true;
 		}
+
+		//判断非http连接时尝试发出系统级intent（比如tbopen等打开第三方应用）
 		if (!url.startsWith("http://") && !url.startsWith("https://")) {
+			final PackageManager packageManager = this.getPackageManager();
+			final Intent intent = new Intent(Intent.ACTION_VIEW);
+			intent.setData(uri);//Uri.parse("tbopen://m.taobao.com/tbopen/index.html?action=ali.open.nav&module=h5&appkey=23402401&backURL=&TTID=2014_0_23402401@baichuan_h5_0.0.3&bootImage=0&appName=&packageName=&source=bc&tag=&utdid=&scm=&pvid=&uri=https://taoquan.taobao.com/coupon/unify_apply.htm?sellerId=1114408582&activityId=c184815f21714efba5225887e75852cd&h5Url=https%3A%2F%2Ftaoquan.taobao.com%2Fcoupon%2Funify_apply.htm%3FsellerId%3D1114408582%26activityId%3Dc184815f21714efba5225887e75852cd%26params%3D%25257B%252522TTID%252522%25253A%2525222014_0_23402401%252540baichuan_h5_0.0.3%252522%25252C%252522source%252522%25253A%252522bc%252522%25252C%252522ybhpss%252522%25253A%252522dHRpZD0yMDE0XzBfMjM0MDI0MDElNDBiYWljaHVhbl9oNV8wLjAuMw%2525253D%2525253D%252522%25257D&params=%7B%22TTID%22%3A%222014_0_23402401%40baichuan_h5_0.0.3%22%2C%22source%22%3A%22bc%22%2C%22ybhpss%22%3A%22dHRpZD0yMDE0XzBfMjM0MDI0MDElNDBiYWljaHVhbl9oNV8wLjAuMw%253D%253D%22%7D"));
+			List<ResolveInfo> list = packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+			if(list.size() > 0){//可以处理此intent的情况
+				startActivity(intent);
+				return true;
+			}
+
 			return false;
 		}
+
+
 		// 截获页面分享请求，分享数据
 		if ("/client/dbshare".equals(uri.getPath())) {
 			String content = uri.getQueryParameter("content");
